@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
     import './index.css';
 
     function App() {
+      const [models, setModels] = useState([]);
       const [model, setModel] = useState('');
       const [recordCount, setRecordCount] = useState(10);
       const [outputFormat, setOutputFormat] = useState('json');
@@ -10,13 +11,32 @@ import React, { useState } from 'react';
       const [progress, setProgress] = useState(0);
       const [data, setData] = useState(null);
 
+      useEffect(() => {
+        fetchModels();
+      }, []);
+
+      const fetchModels = async () => {
+        try {
+          console.log('Fetching models...');
+          const response = await fetch('http://localhost:11434/api/tags');
+          if (!response.ok) {
+            throw new Error('Failed to fetch models');
+          }
+          const result = await response.json();
+          console.log('Models fetched:', result.models);
+          setModels(result.models.map(m => m.name));
+        } catch (error) {
+          console.error('Error fetching models:', error);
+        }
+      };
+
       const handleGenerateData = async () => {
         setLoading(true);
         setProgress(0);
 
         // Simulate API call to Ollama
         try {
-          const response = await fetch('/api/generate-data', {
+          const response = await fetch('http://localhost:11434/api/generate', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -45,9 +65,9 @@ import React, { useState } from 'react';
             <label htmlFor="model">Select Model:</label>
             <select id="model" value={model} onChange={(e) => setModel(e.target.value)}>
               <option value="">--Select a model--</option>
-              <option value="model1">Model 1</option>
-              <option value="model2">Model 2</option>
-              {/* Add more models as needed */}
+              {models.map((m, index) => (
+                <option key={index} value={m}>{m}</option>
+              ))}
             </select>
           </div>
           <div className="form-group">
